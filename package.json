@@ -1,0 +1,9 @@
+{
+  "name": "ikonex-academy-sms",
+  "version": "1.0.0",
+  "description": "Student Management System for Ikonex Academy",
+  "scripts": {
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd frontend && npm run dev"
+  }
+}
