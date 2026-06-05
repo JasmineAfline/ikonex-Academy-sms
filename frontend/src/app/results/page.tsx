@@ -40,6 +40,22 @@ export default function ResultsPage() {
           </select>
         </div>
         <div style={{ background: '#fff', borderRadius: '10px', padding: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+
+<div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+  {selectedStudent && (
+    <a href={`http://localhost:5000/api/pdf/student/${selectedStudent}`} target="_blank"
+      style={{ padding: '0.6rem 1.2rem', background: '#2563eb', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}>
+      ⬇ Download Student Report PDF
+    </a>
+  )}
+  {selectedStream && (
+    <a href={`http://localhost:5000/api/pdf/class/${selectedStream}`} target="_blank"
+      style={{ padding: '0.6rem 1.2rem', background: '#10b981', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}>
+      ⬇ Download Class Report PDF
+    </a>
+  )}
+</div>
+
           <h2 style={{ fontWeight: 600, marginBottom: '1rem' }}>Individual Result</h2>
           <select value={selectedStudent} onChange={e => loadStudentResult(e.target.value)}
             style={{ width: '100%', padding: '0.5rem 1rem', borderRadius: '6px', border: '1px solid #d1d5db' }}>

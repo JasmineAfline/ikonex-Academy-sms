@@ -8,12 +8,14 @@ const studentRoutes = require('./routes/students');
 const subjectRoutes = require('./routes/subjects');
 const scoreRoutes = require('./routes/scores');
 const resultsRoutes = require('./routes/results');
+const pdfRoutes = require('./routes/pdf');
 
 const app = express();
 
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use('/api/pdf', pdfRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Ikonex SMS API running' });
