@@ -1,116 +1,131 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import Link from 'next/link';
+import toast from 'react-hot-toast';
 import * as S from '@/lib/styles';
 
-export default function StudentDetailPage({ params }: { params: { studentId: string } }) {
-  const router = useRouter();
-  const [student, setStudent] = useState<any>(null);
-  const [scores, setScores] = useState<any[]>([]);
-  const [result, setResult] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+export default function SubjectsPage() {
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [streams, setStreams] = useState<any[]>([]);
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [editId, setEditId] = useState<number | null>(null);
+  const [assignStreamId, setAssignStreamId] = useState('');
+  const [assignSubjectId, setAssignSubjectId] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    const id = params.studentId;
-    if (!id) return;
-    Promise.all([
-      api.get(`/students/${id}`),
-      api.get(`/scores/student/${id}`),
-      api.get(`/results/student/${id}`),
-    ]).then(([s, sc, r]) => {
-      setStudent(s.data);
-      setScores(sc.data);
-      setResult(r.data);
-    }).catch(() => router.push('/students'))
-      .finally(() => setLoading(false));
-  }, [params.studentId]);
+  const load = async () => {
+    try {
+      const [s, st] = await Promise.all([api.get('/subjects'), api.get('/streams')]);
+      setSubjects(s.data);
+      setStreams(st.data);
+    } catch { toast.error('Failed to load data'); }
+  };
 
-  if (loading) return <div style={{ padding: '2rem', color: '#94a3b8', fontSize: '14px' }}>Loading student...</div>;
-  if (!student) return null;
+  useEffect(() => { load(); }, []);
 
-  const initials = `${student.first_name[0]}${student.last_name[0]}`.toUpperCase();
+  const submit = async () => {
+    if (!name || !code) return toast.error('Name and code are required');
+    setSaving(true);
+    try {
+      if (editId) { await api.put(`/subjects/${editId}`, { name, code }); toast.success('Subject updated'); }
+      else { await api.post('/subjects', { name, code }); toast.success('Subject created'); }
+      setName(''); setCode(''); setEditId(null); load();
+    } catch (e: any) { toast.error(e.response?.data?.error || 'Error'); }
+    setSaving(false);
+  };
+
+  const remove = async (id: number, n: string) => {
+    if (!confirm(`Delete "${n}"?`)) return;
+    try { await api.delete(`/subjects/${id}`); toast.success('Deleted'); load(); }
+    catch { toast.error('Could not delete'); }
+  };
+
+  const assign = async () => {
+    if (!assignStreamId || !assignSubjectId) return toast.error('Select both stream and subject');
+    try {
+      await api.post('/subjects/assign', { stream_id: assignStreamId, subject_id: assignSubjectId });
+      toast.success('Subject assigned to stream');
+      setAssignStreamId(''); setAssignSubjectId('');
+    } catch (e: any) { toast.error(e.response?.data?.error || 'Already assigned or error'); }
+  };
 
   return (
-    <div style={{ maxWidth: '1000px' }}>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <Link href="/students" style={{ fontSize: '13px', color: '#94a3b8', textDecoration: 'none' }}>
-          ← Back to Students
-        </Link>
+    <div style={{ maxWidth: '900px' }}>
+      <div style={{ marginBottom: '1.75rem' }}>
+        <h1 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0f172a' }}>Subjects</h1>
+        <p style={{ color: '#94a3b8', marginTop: '3px', fontSize: '13px' }}>Manage subjects and assign them to class streams</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 300px) 1fr', gap: '1.5rem', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
         <div style={S.card}>
-          <div style={{
-            width: '56px', height: '56px', borderRadius: '14px',
-            background: '#2563eb', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontSize: '18px', fontWeight: 700,
-            color: '#fff', marginBottom: '1rem'
-          }}>{initials}</div>
-          <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', marginBottom: '2px' }}>
-            {student.first_name} {student.last_name}
-          </h2>
-          <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '1.25rem' }}>
-            {student.stream_name || 'No stream assigned'}
-          </p>
-
-          {[
-            { label: 'Admission No.', value: student.admission_number },
-            { label: 'Gender', value: student.gender || '—' },
-            { label: 'Date of Birth', value: student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString() : '—' },
-            { label: 'Stream', value: student.stream_name || '—' },
-          ].map(item => (
-            <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
-              <span style={{ color: '#94a3b8' }}>{item.label}</span>
-              <span style={{ fontWeight: 500, color: '#0f172a' }}>{item.value}</span>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '1rem' }}>
+            {editId ? 'Edit Subject' : 'New Subject'}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={S.formGroup}>
+              <label style={S.label}>Subject Name</label>
+              <input style={S.input} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Mathematics" />
             </div>
-          ))}
-
-          <a href={`${process.env.NEXT_PUBLIC_API_URL}/pdf/student/${params.studentId}`} target="_blank" style={{ textDecoration: 'none', display: 'block', marginTop: '1.25rem' }}>
-            <button style={{ ...S.btnPrimary, width: '100%' }}>Download Report Card</button>
-          </a>
-        </div>
-
-        <div>
-          {result && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-              {[
-                { label: 'Total Marks', value: result.summary.total_marks },
-                { label: 'Average', value: `${result.summary.average}%` },
-                { label: 'Subjects', value: result.summary.number_of_subjects },
-              ].map(stat => (
-                <div key={stat.label} style={{ ...S.card, textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#2563eb' }}>{stat.value}</div>
-                  <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>{stat.label}</div>
-                </div>
-              ))}
+            <div style={S.formGroup}>
+              <label style={S.label}>Subject Code</label>
+              <input style={S.input} value={code} onChange={e => setCode(e.target.value)} placeholder="e.g. MATH" />
             </div>
-          )}
-
-          <div style={S.tableWrapper}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>{['Subject', 'Exam', 'CA', 'Total', 'Grade', 'Remark'].map(h => <th key={h} style={S.th}>{h}</th>)}</tr>
-              </thead>
-              <tbody>
-                {scores.map(s => (
-                  <tr key={s.id}
-                    onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = '#f8fafc'}
-                    onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = ''}>
-                    <td style={{ ...S.td, fontWeight: 500 }}>{s.subject_name}</td>
-                    <td style={S.td}>{s.exam_score}</td>
-                    <td style={S.td}>{s.ca_score}</td>
-                    <td style={{ ...S.td, fontWeight: 600 }}>{s.total_score}</td>
-                    <td style={S.td}><span style={S.gradeBadge(s.grade)}>{s.grade}</span></td>
-                    <td style={{ ...S.td, color: '#94a3b8' }}>{s.remark}</td>
-                  </tr>
-                ))}
-                {!scores.length && <tr><td colSpan={6} style={S.emptyState}>No scores recorded yet.</td></tr>}
-              </tbody>
-            </table>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button style={S.btnPrimary} onClick={submit} disabled={saving}>
+                {saving ? 'Saving...' : editId ? 'Update' : 'Add Subject'}
+              </button>
+              {editId && <button style={S.btnGhost} onClick={() => { setEditId(null); setName(''); setCode(''); }}>Cancel</button>}
+            </div>
           </div>
         </div>
+
+        <div style={S.card}>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '1rem' }}>Assign Subject to Stream</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={S.formGroup}>
+              <label style={S.label}>Class Stream</label>
+              <select style={S.select} value={assignStreamId} onChange={e => setAssignStreamId(e.target.value)}>
+                <option value="">Select stream...</option>
+                {streams.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div style={S.formGroup}>
+              <label style={S.label}>Subject</label>
+              <select style={S.select} value={assignSubjectId} onChange={e => setAssignSubjectId(e.target.value)}>
+                <option value="">Select subject...</option>
+                {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <button style={S.btnPrimary} onClick={assign}>Assign to Stream</button>
+          </div>
+        </div>
+      </div>
+
+      <div style={S.tableWrapper}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>{['Code', 'Subject Name', 'Created', 'Actions'].map(h => <th key={h} style={S.th}>{h}</th>)}</tr>
+          </thead>
+          <tbody>
+            {subjects.map(s => (
+              <tr key={s.id}
+                onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = '#f8fafc'}
+                onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = ''}>
+                <td style={S.td}><span style={S.badge('blue')}>{s.code}</span></td>
+                <td style={{ ...S.td, fontWeight: 500 }}>{s.name}</td>
+                <td style={{ ...S.td, color: '#94a3b8' }}>{new Date(s.created_at).toLocaleDateString()}</td>
+                <td style={S.td}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button style={S.btnEdit} onClick={() => { setEditId(s.id); setName(s.name); setCode(s.code); }}>Edit</button>
+                    <button style={S.btnDanger} onClick={() => remove(s.id, s.name)}>Delete</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {!subjects.length && <tr><td colSpan={4} style={S.emptyState}>No subjects yet.</td></tr>}
+          </tbody>
+        </table>
       </div>
     </div>
   );
