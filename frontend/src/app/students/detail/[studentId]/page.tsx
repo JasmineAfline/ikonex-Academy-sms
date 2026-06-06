@@ -20,9 +20,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
       api.get(`/scores/student/${id}`),
       api.get(`/results/student/${id}`),
     ]).then(([s, sc, r]) => {
-      setStudent(s.data);
-      setScores(sc.data);
-      setResult(r.data);
+      setStudent(s.data); setScores(sc.data); setResult(r.data);
     }).catch(() => router.push('/students'))
       .finally(() => setLoading(false));
   }, [params.studentId]);
@@ -42,18 +40,11 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 300px) 1fr', gap: '1.5rem', alignItems: 'start' }}>
         <div style={S.card}>
-          <div style={{
-            width: '56px', height: '56px', borderRadius: '14px',
-            background: '#2563eb', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontSize: '18px', fontWeight: 700,
-            color: '#fff', marginBottom: '1rem'
-          }}>{initials}</div>
-          <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', marginBottom: '2px' }}>
-            {student.first_name} {student.last_name}
-          </h2>
-          <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '1.25rem' }}>
-            {student.stream_name || 'No stream assigned'}
-          </p>
+          <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 700, color: '#fff', marginBottom: '1rem' }}>
+            {initials}
+          </div>
+          <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', marginBottom: '2px' }}>{student.first_name} {student.last_name}</h2>
+          <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '1.25rem' }}>{student.stream_name || 'No stream assigned'}</p>
 
           {[
             { label: 'Admission No.', value: student.admission_number },

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import * as S from '@/lib/styles';
 
 export default function StreamsPage() {
   const [streams, setStreams] = useState<any[]>([]);
@@ -24,68 +25,68 @@ export default function StreamsPage() {
     setLoading(false);
   };
 
-  const remove = async (id: number, name: string) => {
-    if (!confirm(`Delete stream "${name}"?`)) return;
-    try { await api.delete(`/streams/${id}`); toast.success('Stream deleted'); load(); }
-    catch (e: any) { toast.error(e.response?.data?.error || 'Could not delete'); }
+  const remove = async (id: number, sname: string) => {
+    if (!confirm(`Delete "${sname}"?`)) return;
+    try { await api.delete(`/streams/${id}`); toast.success('Deleted'); load(); }
+    catch (e: any) { toast.error('Could not delete'); }
   };
 
   return (
-    <div>
-      <div className="page-header">
-        <h1>Class Streams</h1>
-        <p>Create and manage class streams for Ikonex Academy</p>
+    <div style={{ maxWidth: '900px' }}>
+      <div style={S.pageHeader}>
+        <h1 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0f172a' }}>Class Streams</h1>
+        <p style={{ color: '#94a3b8', marginTop: '3px', fontSize: '13px' }}>Create and manage class streams</p>
       </div>
 
-      <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+      <div style={{ ...S.card, marginBottom: '1.5rem' }}>
+        <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '1rem' }}>
           {editId ? 'Edit Stream' : 'New Stream'}
         </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Stream Name</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Form 1A" />
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div style={S.formGroup}>
+            <label style={S.label}>Stream Name</label>
+            <input style={S.input} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Form 1A" />
           </div>
-          <div className="form-group" style={{ flex: 2 }}>
-            <label>Description (optional)</label>
-            <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Brief description" />
+          <div style={{ ...S.formGroup, flex: 2 }}>
+            <label style={S.label}>Description (optional)</label>
+            <input style={S.input} value={description} onChange={e => setDescription(e.target.value)} placeholder="Brief description" />
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', paddingBottom: '0' }}>
-            <button className="btn-primary" onClick={submit} disabled={loading}>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button style={S.btnPrimary} onClick={submit} disabled={loading}>
               {loading ? 'Saving...' : editId ? 'Update' : 'Add Stream'}
             </button>
-            {editId && <button className="btn-ghost" onClick={() => { setEditId(null); setName(''); setDescription(''); }}>Cancel</button>}
+            {editId && <button style={S.btnGhost} onClick={() => { setEditId(null); setName(''); setDescription(''); }}>Cancel</button>}
           </div>
         </div>
       </div>
 
-      <div className="table-wrapper">
-        <table>
+      <div style={S.tableWrapper}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              <th>Stream Name</th>
-              <th>Description</th>
-              <th>Created</th>
-              <th>Actions</th>
+              {['Stream Name', 'Description', 'Created', 'Actions'].map(h => (
+                <th key={h} style={S.th}>{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {streams.map(s => (
-              <tr key={s.id}>
-                <td><span className="badge badge-blue">{s.name}</span></td>
-                <td style={{ color: 'var(--text-secondary)' }}>{s.description || '—'}</td>
-                <td style={{ color: 'var(--text-muted)' }}>{new Date(s.created_at).toLocaleDateString()}</td>
-                <td>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn-edit" style={{ padding: '4px 12px', fontSize: '12px' }} onClick={() => { setEditId(s.id); setName(s.name); setDescription(s.description || ''); }}>Edit</button>
-                    <button className="btn-danger" style={{ padding: '4px 12px', fontSize: '12px' }} onClick={() => remove(s.id, s.name)}>Delete</button>
+              <tr key={s.id} style={{ transition: 'background 0.1s' }}
+                onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = '#f8fafc'}
+                onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = ''}
+              >
+                <td style={S.td}><span style={S.badge('blue')}>{s.name}</span></td>
+                <td style={{ ...S.td, color: '#64748b' }}>{s.description || '—'}</td>
+                <td style={{ ...S.td, color: '#94a3b8' }}>{new Date(s.created_at).toLocaleDateString()}</td>
+                <td style={S.td}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button style={S.btnEdit} onClick={() => { setEditId(s.id); setName(s.name); setDescription(s.description || ''); }}>Edit</button>
+                    <button style={S.btnDanger} onClick={() => remove(s.id, s.name)}>Delete</button>
                   </div>
                 </td>
               </tr>
             ))}
-            {!streams.length && (
-              <tr><td colSpan={4}><div className="empty-state"><p>No class streams yet. Add your first stream above.</p></div></td></tr>
-            )}
+            {!streams.length && <tr><td colSpan={4} style={S.emptyState}>No streams yet. Add your first stream above.</td></tr>}
           </tbody>
         </table>
       </div>
