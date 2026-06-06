@@ -44,7 +44,7 @@ https://github.com/JasmineAfline/ikonex-Academy-sms
 ```bash
 cd backend
 cp .env.example .env
-# Fill in your DB credentials in .env
+
 npm install
 npm run migrate
 npm run dev
@@ -54,7 +54,7 @@ npm run dev
 ```bash
 cd frontend
 cp .env.example .env.local
-# Set NEXT_PUBLIC_API_URL=http://localhost:5000/api
+
 npm install
 npm run dev
 ```
