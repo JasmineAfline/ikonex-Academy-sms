@@ -15,38 +15,35 @@ export default function Sidebar() {
   const pathname = usePathname();
   return (
     <aside style={{
-      width: '240px', minHeight: '100vh',
-      background: '#0f172a',
-      padding: '0', display: 'flex', flexDirection: 'column',
-      boxShadow: '4px 0 24px rgba(0,0,0,0.15)', flexShrink: 0
+      width: '230px', minHeight: '100vh',
+      background: 'var(--sidebar-bg)',
+      display: 'flex', flexDirection: 'column', flexShrink: 0,
+      borderRight: '1px solid rgba(255,255,255,0.05)'
     }}>
-      <div style={{
-        padding: '1.75rem 1.5rem 1.25rem',
-        borderBottom: '1px solid rgba(255,255,255,0.07)'
-      }}>
+      <div style={{ padding: '1.75rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{
-          width: '38px', height: '38px', borderRadius: '10px',
-          background: '#3b82f6', display: 'flex', alignItems: 'center',
-          justifyContent: 'center', fontSize: '16px', fontWeight: 700,
-          color: '#fff', marginBottom: '12px'
+          width: '36px', height: '36px', borderRadius: '9px',
+          background: 'var(--primary)', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', fontSize: '14px', fontWeight: 700,
+          color: '#fff', marginBottom: '12px', letterSpacing: '-0.5px'
         }}>IA</div>
-        <div style={{ color: '#fff', fontWeight: 700, fontSize: '15px' }}>Ikonex Academy</div>
-        <div style={{ color: '#475569', fontSize: '12px', marginTop: '2px' }}>Student Management</div>
+        <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: '14px' }}>Ikonex Academy</div>
+        <div style={{ color: '#334155', fontSize: '12px', marginTop: '2px' }}>Student Management System</div>
       </div>
 
-      <nav style={{ padding: '1rem 0.75rem', flex: 1 }}>
-        <div style={{ fontSize: '10px', fontWeight: 600, color: '#334155', letterSpacing: '0.1em', padding: '0 0.75rem', marginBottom: '0.5rem' }}>NAVIGATION</div>
+      <nav style={{ padding: '1.25rem 0.875rem', flex: 1 }}>
+        <div style={{ fontSize: '10px', fontWeight: 600, color: '#1e293b', letterSpacing: '0.1em', padding: '0 0.625rem', marginBottom: '0.5rem' }}>MENU</div>
         {links.map(link => {
           const active = pathname === link.href;
           return (
             <Link key={link.href} href={link.href} style={{
               display: 'flex', alignItems: 'center',
-              padding: '0.6rem 0.875rem', borderRadius: '8px',
+              padding: '0.575rem 0.875rem', borderRadius: '8px',
               textDecoration: 'none', marginBottom: '2px',
-              color: active ? '#fff' : '#64748b',
-              background: active ? '#3b82f6' : 'transparent',
-              fontWeight: active ? 600 : 400, fontSize: '14px',
-              transition: 'all 0.15s ease',
+              color: active ? '#fff' : 'var(--sidebar-text)',
+              background: active ? 'var(--primary)' : 'transparent',
+              fontWeight: active ? 600 : 400, fontSize: '13.5px',
+              transition: 'all 0.15s',
             }}>
               {link.label}
             </Link>
@@ -54,10 +51,8 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ fontSize: '11px', color: '#334155', textAlign: 'center' }}>
-          Ikonex Academy © 2025
-        </div>
+      <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ fontSize: '11px', color: '#1e293b' }}>© 2025 Ikonex Academy</div>
       </div>
     </aside>
   );

@@ -5,66 +5,111 @@ import toast from 'react-hot-toast';
 
 export default function SubjectsPage() {
   const [subjects, setSubjects] = useState<any[]>([]);
+  const [streams, setStreams] = useState<any[]>([]);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [editId, setEditId] = useState<number | null>(null);
+  const [assignStreamId, setAssignStreamId] = useState('');
+  const [assignSubjectId, setAssignSubjectId] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const load = async () => { const res = await api.get('/subjects'); setSubjects(res.data); };
+  const load = async () => {
+    const [s, st] = await Promise.all([api.get('/subjects'), api.get('/streams')]);
+    setSubjects(s.data); setStreams(st.data);
+  };
   useEffect(() => { load(); }, []);
 
   const submit = async () => {
-    if (!name || !code) return toast.error('Name and code required');
+    if (!name || !code) return toast.error('Name and code are required');
+    setLoading(true);
     try {
-      if (editId) { await api.put(`/subjects/${editId}`, { name, code }); toast.success('Updated'); }
+      if (editId) { await api.put(`/subjects/${editId}`, { name, code }); toast.success('Subject updated'); }
       else { await api.post('/subjects', { name, code }); toast.success('Subject created'); }
       setName(''); setCode(''); setEditId(null); load();
-    } catch (e: any) { toast.error(e.response?.data?.error || 'Error'); }
+    } catch (e: any) { toast.error(e.response?.data?.error || 'Something went wrong'); }
+    setLoading(false);
   };
 
-  const remove = async (id: number) => {
-    if (!confirm('Delete subject?')) return;
-    await api.delete(`/subjects/${id}`); toast.success('Deleted'); load();
+  const remove = async (id: number, name: string) => {
+    if (!confirm(`Delete subject "${name}"?`)) return;
+    try { await api.delete(`/subjects/${id}`); toast.success('Subject deleted'); load(); }
+    catch (e: any) { toast.error(e.response?.data?.error || 'Could not delete'); }
+  };
+
+  const assign = async () => {
+    if (!assignStreamId || !assignSubjectId) return toast.error('Select both stream and subject');
+    try { await api.post('/subjects/assign', { stream_id: assignStreamId, subject_id: assignSubjectId }); toast.success('Subject assigned to stream'); setAssignStreamId(''); setAssignSubjectId(''); }
+    catch (e: any) { toast.error(e.response?.data?.error || 'Already assigned or error'); }
   };
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' }}>Subjects</h1>
-      <div style={{ background: '#fff', borderRadius: '10px', padding: '1.5rem', marginBottom: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
-        <h2 style={{ fontWeight: 600, marginBottom: '1rem' }}>{editId ? 'Edit Subject' : 'Add Subject'}</h2>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="Subject name e.g. Mathematics"
-            style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: '1px solid #d1d5db', flex: 2 }} />
-          <input value={code} onChange={e => setCode(e.target.value)} placeholder="Code e.g. MATH"
-            style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: '1px solid #d1d5db', flex: 1 }} />
-          <button onClick={submit} style={{ padding: '0.5rem 1.5rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>
-            {editId ? 'Update' : 'Add'}
-          </button>
-          {editId && <button onClick={() => { setEditId(null); setName(''); setCode(''); }}
-            style={{ padding: '0.5rem 1rem', background: '#6b7280', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>}
+      <div className="page-header">
+        <h1>Subjects</h1>
+        <p>Manage subjects and assign them to class streams</p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+        <div className="card">
+          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+            {editId ? 'Edit Subject' : 'New Subject'}
+          </div>
+          <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+            <label>Subject Name</label>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Mathematics" />
+          </div>
+          <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+            <label>Subject Code</label>
+            <input value={code} onChange={e => setCode(e.target.value)} placeholder="e.g. MATH" />
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="btn-primary" onClick={submit} disabled={loading}>{loading ? 'Saving...' : editId ? 'Update' : 'Add Subject'}</button>
+            {editId && <button className="btn-ghost" onClick={() => { setEditId(null); setName(''); setCode(''); }}>Cancel</button>}
+          </div>
+        </div>
+
+        <div className="card">
+          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>Assign Subject to Stream</div>
+          <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+            <label>Select Stream</label>
+            <select value={assignStreamId} onChange={e => setAssignStreamId(e.target.value)}>
+              <option value="">Choose stream...</option>
+              {streams.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+            <label>Select Subject</label>
+            <select value={assignSubjectId} onChange={e => setAssignSubjectId(e.target.value)}>
+              <option value="">Choose subject...</option>
+              {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <button className="btn-primary" onClick={assign}>Assign</button>
         </div>
       </div>
-      <div style={{ background: '#fff', borderRadius: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead style={{ background: '#f9fafb' }}>
-            <tr>{['Code', 'Name', 'Created', 'Actions'].map(h => (
-              <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.85rem', color: '#6b7280', fontWeight: 600 }}>{h}</th>
-            ))}</tr>
+
+      <div className="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Code</th><th>Subject Name</th><th>Created</th><th>Actions</th></tr>
           </thead>
           <tbody>
             {subjects.map(s => (
-              <tr key={s.id} style={{ borderTop: '1px solid #f3f4f6' }}>
-                <td style={{ padding: '0.75rem 1rem' }}><span style={{ background: '#dbeafe', color: '#1d4ed8', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600 }}>{s.code}</span></td>
-                <td style={{ padding: '0.75rem 1rem', fontWeight: 500 }}>{s.name}</td>
-                <td style={{ padding: '0.75rem 1rem', color: '#6b7280' }}>{new Date(s.created_at).toLocaleDateString()}</td>
-                <td style={{ padding: '0.75rem 1rem', display: 'flex', gap: '0.5rem' }}>
-                  <button onClick={() => { setEditId(s.id); setName(s.name); setCode(s.code); }}
-                    style={{ padding: '0.3rem 0.8rem', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Edit</button>
-                  <button onClick={() => remove(s.id)}
-                    style={{ padding: '0.3rem 0.8rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Delete</button>
+              <tr key={s.id}>
+                <td><span className="badge badge-blue">{s.code}</span></td>
+                <td style={{ fontWeight: 500 }}>{s.name}</td>
+                <td style={{ color: 'var(--text-muted)' }}>{new Date(s.created_at).toLocaleDateString()}</td>
+                <td>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button className="btn-edit" style={{ padding: '4px 12px', fontSize: '12px' }} onClick={() => { setEditId(s.id); setName(s.name); setCode(s.code); }}>Edit</button>
+                    <button className="btn-danger" style={{ padding: '4px 12px', fontSize: '12px' }} onClick={() => remove(s.id, s.name)}>Delete</button>
+                  </div>
                 </td>
               </tr>
             ))}
-            {!subjects.length && <tr><td colSpan={4} style={{ padding: '2rem', textAlign: 'center', color: '#9ca3af' }}>No subjects yet</td></tr>}
+            {!subjects.length && (
+              <tr><td colSpan={4}><div className="empty-state"><p>No subjects yet.</p></div></td></tr>
+            )}
           </tbody>
         </table>
       </div>
